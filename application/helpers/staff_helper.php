@@ -21,6 +21,7 @@ function get_available_staff_permissions($data = [])
     ];
 
     $withoutViewOwnPermissionsArray = [
+        'view_own' => _l('permission_view_own'),
         'view'   => $viewGlobalName,
         'create' => _l('permission_create'),
         'edit'   => _l('permission_edit'),
@@ -41,6 +42,13 @@ function get_available_staff_permissions($data = [])
             'capabilities' => array_merge($allPermissionsArray, [
                 'view_all_templates' => _l('permission_view_all_templates'),
             ]),
+        ],
+        'support' => [
+            'name'         => _l('support'),
+            'capabilities' => [
+                'view' => $viewGlobalName,
+                'create' => _l('permission_create'),
+            ],
         ],
         'credit_notes' => [
             'name'         => _l('credit_notes'),
@@ -70,7 +78,7 @@ function get_available_staff_permissions($data = [])
         ],
         'invoices' => [
             'name'         => _l('invoices'),
-            'capabilities' => $allPermissionsArray,
+            'capabilities' => array_merge($allPermissionsArray, ['is_sales_agent' => 'Is Sales Agent']),
         ],
         'items' => [
             'name'         => _l('items'),
@@ -89,8 +97,10 @@ function get_available_staff_permissions($data = [])
         ],
         'projects' => [
             'name'         => _l('projects'),
-            'capabilities' => array_merge($withNotApplicableViewOwn, [ 'create_milestones' => _l('permission_create_timesheets'),
-                'edit_milestones'                                                          => _l('permission_edit_milestones'), 'delete_milestones' => _l('permission_delete_milestones'), ]),
+            'capabilities' => array_merge($withNotApplicableViewOwn, [
+                'create_milestones' => _l('permission_create_timesheets'),
+                'edit_milestones'   => _l('permission_edit_milestones'), 'delete_milestones' => _l('permission_delete_milestones'),
+            ]),
             'help' => [
                 'view'     => _l('help_project_permissions'),
                 'view_own' => _l('permission_projects_based_on_assignee'),
@@ -136,7 +146,7 @@ function get_available_staff_permissions($data = [])
                 'delete_timesheet'     => _l('permission_delete_timesheets'),
                 'delete_own_timesheet' => _l('permission_delete_own_timesheets'),
             ]),
-             'help' => [
+            'help' => [
                 'view'     => _l('help_tasks_permissions'),
                 'view_own' => _l('permission_tasks_based_on_assignee'),
             ],
@@ -165,10 +175,7 @@ function get_available_staff_permissions($data = [])
     if ($addLeadsPermission) {
         $corePermissions['leads'] = [
             'name'         => _l('leads'),
-            'capabilities' => [
-                'view'   => $viewGlobalName,
-                'delete' => _l('permission_delete'),
-            ],
+            'capabilities' => $allPermissionsArray,
             'help' => [
                 'view' => _l('help_leads_permission_view'),
             ],
@@ -213,9 +220,9 @@ function staff_profile_image_url($staff_id, $type = 'small')
     if ((string) $staff_id === (string) get_staff_user_id() && isset($GLOBALS['current_user'])) {
         $staff = $GLOBALS['current_user'];
     } else {
-        $CI = & get_instance();
+        $CI = &get_instance();
         $CI->db->select('profile_image')
-        ->where('staffid', $staff_id);
+            ->where('staffid', $staff_id);
 
         $staff = $CI->db->get(db_prefix() . 'staff')->row();
     }
@@ -256,7 +263,7 @@ function staff_profile_image($id, $classes = ['staff-profile-image'], $type = 's
     if ((string) $id === (string) get_staff_user_id() && isset($GLOBALS['current_user'])) {
         $result = $GLOBALS['current_user'];
     } else {
-        $CI     = & get_instance();
+        $CI     = &get_instance();
         $result = $CI->app_object_cache->get('staff-profile-image-data-' . $id);
 
         if (!$result) {
@@ -300,7 +307,7 @@ function get_staff_full_name($userid = '')
         $userid = $tmpStaffUserId;
     }
 
-    $CI = & get_instance();
+    $CI = &get_instance();
 
     $staff = $CI->app_object_cache->get('staff-full-name-data-' . $userid);
 
@@ -328,7 +335,7 @@ function get_staff_default_language($staffid = '')
 
         $staffid = get_staff_user_id();
     }
-    $CI = & get_instance();
+    $CI = &get_instance();
     $CI->db->select('default_language');
     $CI->db->from(db_prefix() . 'staff');
     $CI->db->where('staffid', $staffid);
@@ -375,7 +382,7 @@ function update_staff_recent_search_history($history, $staff_id = null)
  */
 function is_staff_member($staff_id = '')
 {
-    $CI = & get_instance();
+    $CI = &get_instance();
     if ($staff_id == '') {
         if (isset($GLOBALS['current_user'])) {
             return $GLOBALS['current_user']->is_not_staff === '0';
@@ -384,7 +391,7 @@ function is_staff_member($staff_id = '')
     }
 
     $CI->db->where('staffid', $staff_id)
-    ->where('is_not_staff', 0);
+        ->where('is_not_staff', 0);
 
     return $CI->db->count_all_results(db_prefix() . 'staff') > 0 ? true : false;
 }
