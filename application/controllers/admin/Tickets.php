@@ -18,104 +18,113 @@ class Tickets extends AdminController
 
     public function index($status = '', $userid = '')
     {
-        close_setup_menu();
+        if (staff_can('view', 'support')) {
+            close_setup_menu();
 
-        if (!is_numeric($status)) {
-            $status = '';
-        }
-
-        $data['table'] = App_table::find('tickets');
-
-        if ($this->input->is_ajax_request()) {
-            if (!$this->input->post('via_ticket')) {
-                $tableParams = [
-                    'status' => $status,
-                    'userid' => $userid,
-                ];
-            } else {
-                // request for othes tickets when single ticket is opened
-                $tableParams = [
-                    'userid'        => $this->input->post('via_ticket_userid'),
-                    'via_ticket' => $this->input->post('via_ticket'),
-                ];
-
-                if ($tableParams['userid'] == 0) {
-                    unset($tableParams['userid']);
-                    $tableParams['by_email'] = $this->input->post('via_ticket_email');
-                }
+            if (!is_numeric($status)) {
+                $status = '';
             }
-            $data['table']->output($tableParams);
-        }
 
-        $data['chosen_ticket_status']              = $status;
-        $data['weekly_tickets_opening_statistics'] = json_encode($this->tickets_model->get_weekly_tickets_opening_statistics());
-        $data['title']                             = _l('support_tickets');
-        $this->load->model('departments_model');
-        $data['statuses']             = $this->tickets_model->get_ticket_status();
-        $data['staff_deparments_ids'] = $this->departments_model->get_staff_departments(get_staff_user_id(), true);
-        $data['departments']          = $this->departments_model->get();
-        $data['priorities']           = $this->tickets_model->get_priority();
-        $data['services']             = $this->tickets_model->get_service();
-        $data['ticket_assignees']     = $this->tickets_model->get_tickets_assignes_disctinct();
-        $data['bodyclass']            = 'tickets-page';
-        add_admin_tickets_js_assets();
-        $data['default_tickets_list_statuses'] = hooks()->apply_filters('default_tickets_list_statuses', [1, 2, 4]);
-        $this->load->view('admin/tickets/list', $data);
+            $data['table'] = App_table::find('tickets');
+
+            if ($this->input->is_ajax_request()) {
+                if (!$this->input->post('via_ticket')) {
+                    $tableParams = [
+                        'status' => $status,
+                        'userid' => $userid,
+                    ];
+                } else {
+                    // request for othes tickets when single ticket is opened
+                    $tableParams = [
+                        'userid'        => $this->input->post('via_ticket_userid'),
+                        'via_ticket' => $this->input->post('via_ticket'),
+                    ];
+
+                    if ($tableParams['userid'] == 0) {
+                        unset($tableParams['userid']);
+                        $tableParams['by_email'] = $this->input->post('via_ticket_email');
+                    }
+                }
+                $data['table']->output($tableParams);
+            }
+
+            $data['chosen_ticket_status']              = $status;
+            $data['weekly_tickets_opening_statistics'] = json_encode($this->tickets_model->get_weekly_tickets_opening_statistics());
+            $data['title']                             = _l('support_tickets');
+            $this->load->model('departments_model');
+            $data['statuses']             = $this->tickets_model->get_ticket_status();
+            $data['staff_deparments_ids'] = $this->departments_model->get_staff_departments(get_staff_user_id(), true);
+            $data['departments']          = $this->departments_model->get();
+            $data['priorities']           = $this->tickets_model->get_priority();
+            $data['services']             = $this->tickets_model->get_service();
+            $data['ticket_assignees']     = $this->tickets_model->get_tickets_assignes_disctinct();
+            $data['bodyclass']            = 'tickets-page';
+            add_admin_tickets_js_assets();
+            $data['default_tickets_list_statuses'] = hooks()->apply_filters('default_tickets_list_statuses', [1, 2, 4]);
+            $this->load->view('admin/tickets/list', $data);
+        } else {
+            access_denied('ticket');
+        }
     }
 
     public function add($userid = false)
     {
-        if ($this->input->post()) {
-            $data            = $this->input->post();
-            $data['message'] = html_purify($this->input->post('message', false));
-            $id              = $this->tickets_model->add($data, get_staff_user_id());
-            if ($id) {
-                set_alert('success', _l('new_ticket_added_successfully', $id));
-                redirect(admin_url('tickets/ticket/' . $id));
-            }
-        }
-        if ($userid !== false) {
-            $data['userid'] = $userid;
-            $data['client'] = $this->clients_model->get($userid);
-        }
-        // Load necessary models
-        $this->load->model('knowledge_base_model');
-        $this->load->model('departments_model');
+        if (staff_can('create', 'support')) {
 
-        $data['departments']        = $this->departments_model->get();
-        $data['predefined_replies'] = $this->tickets_model->get_predefined_reply();
-        $data['priorities']         = $this->tickets_model->get_priority();
-        $data['services']           = $this->tickets_model->get_service();
-        $whereStaff                 = [];
-        if (get_option('access_tickets_to_none_staff_members') == 0) {
-            $whereStaff['is_not_staff'] = 0;
-        }
-        $data['staff']     = $this->staff_model->get('', $whereStaff);
-        $data['articles']  = $this->knowledge_base_model->get();
-        $data['bodyclass'] = 'ticket';
-        $data['title']     = _l('new_ticket');
-
-        if ($this->input->get('project_id') && $this->input->get('project_id') > 0) {
-            // request from project area to create new ticket
-            $data['project_id'] = $this->input->get('project_id');
-            $data['userid']     = get_client_id_by_project_id($data['project_id']);
-            if (total_rows(db_prefix() . 'contacts', ['active' => 1, 'userid' => $data['userid']]) == 1) {
-                $contact = $this->clients_model->get_contacts($data['userid']);
-                if (isset($contact[0])) {
-                    $data['contact'] = $contact[0];
+            if ($this->input->post()) {
+                $data            = $this->input->post();
+                $data['message'] = html_purify($this->input->post('message', false));
+                $id              = $this->tickets_model->add($data, get_staff_user_id());
+                if ($id) {
+                    set_alert('success', _l('new_ticket_added_successfully', $id));
+                    redirect(admin_url('tickets/ticket/' . $id));
                 }
             }
-        } elseif ($this->input->get('contact_id') && $this->input->get('contact_id') > 0 && $this->input->get('userid')) {
-            $contact_id = $this->input->get('contact_id');
-            if (total_rows(db_prefix() . 'contacts', ['active' => 1, 'id' => $contact_id]) == 1) {
-                $contact = $this->clients_model->get_contact($contact_id);
-                if ($contact) {
-                    $data['contact'] = (array) $contact;
+            if ($userid !== false) {
+                $data['userid'] = $userid;
+                $data['client'] = $this->clients_model->get($userid);
+            }
+            // Load necessary models
+            $this->load->model('knowledge_base_model');
+            $this->load->model('departments_model');
+
+            $data['departments']        = $this->departments_model->get();
+            $data['predefined_replies'] = $this->tickets_model->get_predefined_reply();
+            $data['priorities']         = $this->tickets_model->get_priority();
+            $data['services']           = $this->tickets_model->get_service();
+            $whereStaff                 = [];
+            if (get_option('access_tickets_to_none_staff_members') == 0) {
+                $whereStaff['is_not_staff'] = 0;
+            }
+            $data['staff']     = $this->staff_model->get('', $whereStaff);
+            $data['articles']  = $this->knowledge_base_model->get();
+            $data['bodyclass'] = 'ticket';
+            $data['title']     = _l('new_ticket');
+
+            if ($this->input->get('project_id') && $this->input->get('project_id') > 0) {
+                // request from project area to create new ticket
+                $data['project_id'] = $this->input->get('project_id');
+                $data['userid']     = get_client_id_by_project_id($data['project_id']);
+                if (total_rows(db_prefix() . 'contacts', ['active' => 1, 'userid' => $data['userid']]) == 1) {
+                    $contact = $this->clients_model->get_contacts($data['userid']);
+                    if (isset($contact[0])) {
+                        $data['contact'] = $contact[0];
+                    }
+                }
+            } elseif ($this->input->get('contact_id') && $this->input->get('contact_id') > 0 && $this->input->get('userid')) {
+                $contact_id = $this->input->get('contact_id');
+                if (total_rows(db_prefix() . 'contacts', ['active' => 1, 'id' => $contact_id]) == 1) {
+                    $contact = $this->clients_model->get_contact($contact_id);
+                    if ($contact) {
+                        $data['contact'] = (array) $contact;
+                    }
                 }
             }
+            add_admin_tickets_js_assets();
+            $this->load->view('admin/tickets/add', $data);
+        } else {
+            access_denied('ticket');
         }
-        add_admin_tickets_js_assets();
-        $this->load->view('admin/tickets/add', $data);
     }
 
     public function delete($ticketid)
@@ -127,7 +136,7 @@ class Tickets extends AdminController
         if (!can_staff_delete_ticket()) {
             access_denied('delete ticket');
         }
-        
+
         $response = $this->tickets_model->delete($ticketid);
 
         if ($response == true) {
@@ -281,7 +290,7 @@ class Tickets extends AdminController
         if (!$reply_id) {
             redirect(admin_url('tickets'));
         }
-        
+
         if (!can_staff_delete_ticket_reply()) {
             access_denied('delete ticket');
         }

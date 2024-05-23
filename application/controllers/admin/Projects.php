@@ -18,11 +18,16 @@ class Projects extends AdminController
 
     public function index()
     {
-        close_setup_menu();
-        $data['statuses'] = $this->projects_model->get_project_statuses();
-        $data['title']    = _l('projects');
-        $data['table'] = App_table::find('projects');
-        $this->load->view('admin/projects/manage', $data);
+        if (staff_can('view', 'projects') || staff_can('view_own',  'projects')) {
+
+            close_setup_menu();
+            $data['statuses'] = $this->projects_model->get_project_statuses();
+            $data['title']    = _l('projects');
+            $data['table'] = App_table::find('projects');
+            $this->load->view('admin/projects/manage', $data);
+        } else {
+            access_denied('Projects');
+        }
     }
 
     public function table($clientid = '')

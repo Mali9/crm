@@ -135,60 +135,71 @@ function app_init_admin_sidebar_menu_items()
         ]);
     }
 
-    $CI->app_menu->add_sidebar_menu_item('projects', [
-        'name'     => _l('projects'),
-        'href'     => admin_url('projects'),
-        'icon'     => 'fa-solid fa-chart-gantt',
-        'position' => 30,
-        'badge'    => [],
-    ]);
+    if (staff_can('view',  'projects') || staff_can('view_own',  'projects')) {
 
-    $CI->app_menu->add_sidebar_menu_item('tasks', [
-        'name'     => _l('als_tasks'),
-        'href'     => admin_url('tasks'),
-        'icon'     => 'fa-regular fa-circle-check',
-        'position' => 35,
-        'badge'    => [],
-    ]);
-
-    if ((!is_staff_member() && get_option('access_tickets_to_none_staff_members') == 1) || is_staff_member()) {
-        $enable_badge = get_option('enable_support_menu_badges');
-        $CI->app_menu->add_sidebar_menu_item('support', [
-            'collapse' => $enable_badge ? true : null,
-            'name'     => _l('support'),
-            'href'     => admin_url('tickets'),
-            'icon'     => 'fa-regular fa-life-ring',
-            'position' => 40,
+        $CI->app_menu->add_sidebar_menu_item('projects', [
+            'name'     => _l('projects'),
+            'href'     => admin_url('projects'),
+            'icon'     => 'fa-solid fa-chart-gantt',
+            'position' => 30,
             'badge'    => [],
         ]);
+    }
 
-        $CI->load->model('tickets_model');
-        $statuses = $CI->tickets_model->get_ticket_status();
+    if (staff_can('view',  'tasks') || staff_can('view_own',  'tasks')) {
 
-        if ($enable_badge) {
-            foreach ($statuses as $status) {
-                $CI->app_menu->add_sidebar_children_item('support', [
-                    'slug'     => 'support-' . $status['ticketstatusid'],
-                    'name'     => ticket_status_translate($status['ticketstatusid']),
-                    'href'     => admin_url('tickets/index/' . $status['ticketstatusid']),
-                    'position' => $status['statusorder'],
-                    'badge'    => [
-                        'value' => $CI->tickets_model->ticket_count($status['ticketstatusid']),
-                        'color' => $status['statuscolor'],
-                    ],
-                ]);
+        $CI->app_menu->add_sidebar_menu_item('tasks', [
+            'name'     => _l('als_tasks'),
+            'href'     => admin_url('tasks'),
+            'icon'     => 'fa-regular fa-circle-check',
+            'position' => 35,
+            'badge'    => [],
+        ]);
+    }
+
+    if ((!is_staff_member() && get_option('access_tickets_to_none_staff_members') == 1) || is_staff_member()) {
+        if (staff_can('view', 'support')) {
+
+            $enable_badge = get_option('enable_support_menu_badges');
+            $CI->app_menu->add_sidebar_menu_item('support', [
+                'collapse' => $enable_badge ? true : null,
+                'name'     => _l('support'),
+                'href'     => admin_url('tickets'),
+                'icon'     => 'fa-regular fa-life-ring',
+                'position' => 40,
+                'badge'    => [],
+            ]);
+
+            $CI->load->model('tickets_model');
+            $statuses = $CI->tickets_model->get_ticket_status();
+
+            if ($enable_badge) {
+                foreach ($statuses as $status) {
+                    $CI->app_menu->add_sidebar_children_item('support', [
+                        'slug'     => 'support-' . $status['ticketstatusid'],
+                        'name'     => ticket_status_translate($status['ticketstatusid']),
+                        'href'     => admin_url('tickets/index/' . $status['ticketstatusid']),
+                        'position' => $status['statusorder'],
+                        'badge'    => [
+                            'value' => $CI->tickets_model->ticket_count($status['ticketstatusid']),
+                            'color' => $status['statuscolor'],
+                        ],
+                    ]);
+                }
             }
         }
     }
 
     if (is_staff_member()) {
-        $CI->app_menu->add_sidebar_menu_item('leads', [
-            'name'     => _l('als_leads'),
-            'href'     => admin_url('leads'),
-            'icon'     => 'fa fa-tty',
-            'position' => 45,
-            'badge'    => [],
-        ]);
+        if (staff_can('view',  'leads') || staff_can('view_own',  'leads')) {
+            $CI->app_menu->add_sidebar_menu_item('leads', [
+                'name'     => _l('als_leads'),
+                'href'     => admin_url('leads'),
+                'icon'     => 'fa fa-tty',
+                'position' => 45,
+                'badge'    => [],
+            ]);
+        }
     }
 
     if ((staff_can('view',  'estimate_request') || staff_can('view_own',  'estimate_request'))) {

@@ -24,12 +24,13 @@
                         <div class="row">
                             <div class="col-md-6">
 
-                                <?php echo render_input('subject', 'ticket_settings_subject', '', 'text', ['required' => 'true']); ?>
+                                <?php echo render_input('subject', 'ticket_settings_subject', '', 'text', ['required' => 'false']); ?>
                                 <div class="form-group select-placeholder" id="ticket_contact_w">
                                     <label for="contactid"><?php echo _l('contact'); ?></label>
                                     <select name="contactid" required="true" id="contactid" class="ajax-search"
                                         data-width="100%" data-live-search="true"
                                         data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
+                                        <option value="1">1</option>
                                         <?php if (isset($contact)) { ?>
                                         <option value="<?php echo e($contact['id']); ?>" selected>
                                             <?php echo $contact['firstname'] . ' ' . $contact['lastname']; ?></option>

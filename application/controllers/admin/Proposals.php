@@ -193,6 +193,13 @@ class Proposals extends AdminController
 
         $data['statuses']      = $this->proposals_model->get_statuses();
         $data['staff']         = $this->staff_model->get('', ['active' => 1]);
+
+        foreach ($data['staff'] as $key => $member) {
+            if (staff_cant('view', 'proposals', $member['staffid']) && staff_cant('view_own', 'proposals', $member['staffid'])) {
+                unset($data['staff'][$key]);
+            }
+        }
+
         $data['currencies']    = $this->currencies_model->get();
         $data['base_currency'] = $this->currencies_model->get_base_currency();
 

@@ -20,9 +20,11 @@ class Invoices extends AdminController
     /* List all invoices datatables */
     public function list_invoices($id = '')
     {
-        if (staff_cant('view', 'invoices')
+        if (
+            staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
-            && get_option('allow_staff_view_invoices_assigned') == '0') {
+            && get_option('allow_staff_view_invoices_assigned') == '0'
+        ) {
             access_denied('invoices');
         }
 
@@ -43,9 +45,11 @@ class Invoices extends AdminController
     /* List all recurring invoices */
     public function recurring($id = '')
     {
-        if (staff_cant('view', 'invoices')
+        if (
+            staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
-            && get_option('allow_staff_view_invoices_assigned') == '0') {
+            && get_option('allow_staff_view_invoices_assigned') == '0'
+        ) {
             access_denied('invoices');
         }
 
@@ -60,16 +64,18 @@ class Invoices extends AdminController
 
     public function table($clientid = '')
     {
-        if (staff_cant('view', 'invoices')
+        if (
+            staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
-            && get_option('allow_staff_view_invoices_assigned') == '0') {
+            && get_option('allow_staff_view_invoices_assigned') == '0'
+        ) {
             ajax_access_denied();
         }
-        
+
         $this->load->model('payment_modes_model');
         $data['payment_modes'] = $this->payment_modes_model->get('', [], true);
 
-        if($this->input->get('recurring')) {
+        if ($this->input->get('recurring')) {
             $this->app->get_table_data('recurring_invoices', [
                 'data'     => $data,
             ]);
@@ -408,6 +414,11 @@ class Invoices extends AdminController
         $data['base_currency'] = $this->currencies_model->get_base_currency();
 
         $data['staff']     = $this->staff_model->get('', ['active' => 1]);
+        foreach ($data['staff'] as $key => $member) {
+            if (staff_cant('is_sales_agent', 'invoices', $member['staffid'])) {
+                unset($data['staff'][$key]);
+            }
+        }
         $data['title']     = $title;
         $data['bodyclass'] = 'invoice';
         $this->load->view('admin/invoices/invoice', $data);
@@ -416,9 +427,11 @@ class Invoices extends AdminController
     /* Get all invoice data used when user click on invoiec number in a datatable left side*/
     public function get_invoice_data_ajax($id)
     {
-        if (staff_cant('view', 'invoices')
+        if (
+            staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
-            && get_option('allow_staff_view_invoices_assigned') == '0') {
+            && get_option('allow_staff_view_invoices_assigned') == '0'
+        ) {
             echo _l('access_denied');
             die;
         }
@@ -491,9 +504,9 @@ class Invoices extends AdminController
         $total_credits_applied = 0;
         foreach ($this->input->post('amount') as $credit_id => $amount) {
             $success = $this->credit_notes_model->apply_credits($credit_id, [
-            'invoice_id' => $invoice_id,
-            'amount'     => $amount,
-        ]);
+                'invoice_id' => $invoice_id,
+                'amount'     => $amount,
+            ]);
             if ($success) {
                 $total_credits_applied++;
             }

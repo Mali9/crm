@@ -174,7 +174,10 @@ return App_table::find('leads')
             }
 
             if (!$locked) {
-                $nameRow .= ' | <a href="' . admin_url('leads/index/' . $aRow['id'] . '?edit=true') . '" onclick="init_lead(' . $aRow['id'] . ', true);return false;">' . _l('edit') . '</a>';
+                if ($aRow['addedfrom'] == get_staff_user_id() || staff_can('edit', 'leads')) {
+
+                    $nameRow .= ' | <a href="' . admin_url('leads/index/' . $aRow['id'] . '?edit=true') . '" onclick="init_lead(' . $aRow['id'] . ', true);return false;">' . _l('edit') . '</a>';
+                }
             }
 
             if ($aRow['addedfrom'] == get_staff_user_id() || $has_permission_delete) {

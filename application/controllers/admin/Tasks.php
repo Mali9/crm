@@ -16,7 +16,12 @@ class Tasks extends AdminController
     /* Open also all taks if user access this /tasks url */
     public function index($id = '')
     {
-        $this->list_tasks($id);
+        if (staff_can('view',  'tasks') || staff_can('view_own',  'tasks')) {
+
+            $this->list_tasks($id);
+        } else {
+            access_denied('tasks');
+        }
     }
 
     /* List all tasks */
@@ -112,7 +117,7 @@ class Tasks extends AdminController
         $this->session->set_userdata([
             'tasks_kanban_view' => $set,
         ]);
-        
+
         if ($manual == false) {
             redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
         }
@@ -276,10 +281,10 @@ class Tasks extends AdminController
     public function init_relation_tasks($rel_id, $rel_type)
     {
         if ($this->input->is_ajax_request()) {
-           App_table::find('related_tasks')->output([
+            App_table::find('related_tasks')->output([
                 'rel_id'   => $rel_id,
                 'rel_type' => $rel_type,
-           ]);
+            ]);
         }
     }
 
@@ -716,8 +721,10 @@ class Tasks extends AdminController
     {
         $task = $this->tasks_model->get($this->input->post('taskid'));
 
-        if (staff_can('edit', 'tasks') ||
-                ($task->current_user_is_creator && staff_can('create', 'tasks'))) {
+        if (
+            staff_can('edit', 'tasks') ||
+            ($task->current_user_is_creator && staff_can('create', 'tasks'))
+        ) {
             echo json_encode([
                 'success'  => $this->tasks_model->add_task_followers($this->input->post()),
                 'taskHtml' => $this->get_task_data($this->input->post('taskid'), true),
@@ -730,8 +737,10 @@ class Tasks extends AdminController
     {
         $task = $this->tasks_model->get($this->input->post('taskid'));
 
-        if (staff_can('edit', 'tasks') ||
-                ($task->current_user_is_creator && staff_can('create', 'tasks'))) {
+        if (
+            staff_can('edit', 'tasks') ||
+            ($task->current_user_is_creator && staff_can('create', 'tasks'))
+        ) {
             echo json_encode([
                 'success'  => $this->tasks_model->add_task_assignees($this->input->post()),
                 'taskHtml' => $this->get_task_data($this->input->post('taskid'), true),
@@ -773,8 +782,10 @@ class Tasks extends AdminController
     {
         $task = $this->tasks_model->get($taskid);
 
-        if (staff_can('edit', 'tasks') ||
-                ($task->current_user_is_creator && staff_can('create', 'tasks'))) {
+        if (
+            staff_can('edit', 'tasks') ||
+            ($task->current_user_is_creator && staff_can('create', 'tasks'))
+        ) {
             $success = $this->tasks_model->remove_assignee($id, $taskid);
             $message = '';
             if ($success) {
@@ -793,8 +804,10 @@ class Tasks extends AdminController
     {
         $task = $this->tasks_model->get($taskid);
 
-        if (staff_can('edit', 'tasks') ||
-                ($task->current_user_is_creator && staff_can('create', 'tasks'))) {
+        if (
+            staff_can('edit', 'tasks') ||
+            ($task->current_user_is_creator && staff_can('create', 'tasks'))
+        ) {
             $success = $this->tasks_model->remove_follower($id, $taskid);
             $message = '';
             if ($success) {
@@ -950,9 +963,11 @@ class Tasks extends AdminController
             set_alert('warning', $message);
         }
 
-        if (empty($_SERVER['HTTP_REFERER']) || 
-            strpos($_SERVER['HTTP_REFERER'], 'tasks/index') !== false || 
-            strpos($_SERVER['HTTP_REFERER'], 'tasks/view') !== false) {
+        if (
+            empty($_SERVER['HTTP_REFERER']) ||
+            strpos($_SERVER['HTTP_REFERER'], 'tasks/index') !== false ||
+            strpos($_SERVER['HTTP_REFERER'], 'tasks/view') !== false
+        ) {
             redirect(admin_url('tasks'));
         } else {
             redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
@@ -1255,9 +1270,11 @@ class Tasks extends AdminController
         if ($this->input->post() && $this->input->is_ajax_request()) {
             $payload = $this->input->post();
             $item    = $this->tasks_model->get_checklist_item($payload['checklistId']);
-            if ($item->addedfrom == get_staff_user_id()
+            if (
+                $item->addedfrom == get_staff_user_id()
                 || is_admin() ||
-                $this->tasks_model->is_task_creator(get_staff_user_id(), $payload['taskId'])) {
+                $this->tasks_model->is_task_creator(get_staff_user_id(), $payload['taskId'])
+            ) {
                 $this->tasks_model->update_checklist_assigned_staff($payload);
                 die;
             }

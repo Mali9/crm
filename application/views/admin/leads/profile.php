@@ -352,6 +352,7 @@
                ) {
                    $assigned_attrs['disabled'] = true;
                }
+             
                echo render_select('assigned', $members, ['staffid', ['firstname', 'lastname']], 'lead_add_edit_assigned', $selected, $assigned_attrs); ?>
             </div>
             <div class="clearfix"></div>
